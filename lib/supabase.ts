@@ -2,6 +2,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 
+import type { Database } from '@/lib/database.types';
+
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -24,19 +26,27 @@ if (!isSupabaseConfigured) {
 /**
  * Supabase client singleton.
  *
- * Only `hooks/use-auth.tsx` should touch `supabase.auth` — screens consume the
- * `useAuth` hook instead, per the layering rule in CLAUDE.md.
+ * Only `hooks/use-auth.tsx` should touch `supabase.auth`, and only the hooks in
+ * `hooks/` should touch the data methods — screens consume hooks instead, per
+ * the layering rule in CLAUDE.md.
  *
  * Sessions persist in AsyncStorage. `expo-secure-store` would be Keychain-backed
  * and stronger, but it caps values at 2048 bytes and Supabase sessions can exceed
  * that; revisit with a chunking adapter before shipping to production.
  */
-export const supabase = createClient(supabaseUrl ?? 'https://placeholder.supabase.co', supabaseAnonKey ?? 'placeholder-anon-key', {
-  auth: {
-    storage: AsyncStorage,
-    autoRefreshToken: true,
-    persistSession: true,
-    // Tokens arrive via a deep link we parse ourselves, never via a web URL bar.
-    detectSessionInUrl: false,
-  },
-});
+export const supabase = createClient<Database>(
+  supabaseUrl ?? 'https://placeholder.supabase.co',
+  supabaseAnonKey ?? 'placeholder-anon-key',
+  {
+    auth: {
+      storage: AsyncStorage,
+      autoRefreshToken: true,
+      persistSession: true,
+      // Tokens arrive via a deep link we parse ourselves, never via a web URL bar.
+      detectSessionInUrl: false,
+    },
+  }
+);
+
+/** The storage bucket holding group cover images. See migration 0002. */
+export const GROUP_COVERS_BUCKET = 'group-covers';
