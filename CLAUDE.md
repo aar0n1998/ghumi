@@ -16,7 +16,7 @@ What exists, so you know what you are building on top of:
 
 | Area | Status |
 |---|---|
-| Google sign-in, session persistence, sign-out | **Implemented; live round-trip not yet confirmed by a human.** Supabase/GCP config verified by API, unit tests pass, but nobody has completed an actual Google sign-in in the app. Verify this first. |
+| Google sign-in, session persistence, sign-out | **Working** — full Google round-trip verified end to end on the iOS simulator |
 | Splash → auth-guarded routing | **Working** — verified on the iOS simulator |
 | Horizon theme, brand mark, app icons | **Working** |
 | Groups tab | **Placeholder only** — renders an empty state, no data |
