@@ -1,13 +1,22 @@
-import { render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen } from '@testing-library/react-native';
 import React from 'react';
 
 import GroupScreen from '@/app/group/[id]';
 import { useGroup, type GroupDetail, type GroupState } from '@/hooks/use-group';
 import { GROUP_FEATURES } from '@/lib/group-features';
 
+const mockBack = jest.fn();
+const mockReplace = jest.fn();
+const mockCanGoBack = jest.fn(() => true);
+
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ id: 'g1' }),
-  useRouter: () => ({ push: jest.fn(), replace: jest.fn(), back: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: mockReplace,
+    back: mockBack,
+    canGoBack: mockCanGoBack,
+  }),
 }));
 
 jest.mock('@/hooks/use-group', () => ({ useGroup: jest.fn() }));
@@ -56,7 +65,38 @@ function state(overrides: Partial<GroupState> = {}): GroupState {
   };
 }
 
+beforeEach(() => {
+  mockBack.mockClear();
+  mockReplace.mockClear();
+  mockCanGoBack.mockReturnValue(true);
+});
+
 describe('GroupScreen', () => {
+  /**
+   * Regression guard. Back used `router.replace('/')`, which animates forward
+   * and never unwinds the stack — the list slid in from the right.
+   */
+  it('pops the stack when going back, rather than pushing the list again', () => {
+    mockedUseGroup.mockReturnValue(state());
+    render(<GroupScreen />);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Back to groups' }));
+
+    expect(mockBack).toHaveBeenCalledTimes(1);
+    expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the list when opened with no history behind it', () => {
+    mockCanGoBack.mockReturnValue(false);
+    mockedUseGroup.mockReturnValue(state());
+    render(<GroupScreen />);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Back to groups' }));
+
+    expect(mockReplace).toHaveBeenCalledWith('/');
+    expect(mockBack).not.toHaveBeenCalled();
+  });
+
   it('shows the group title and description', () => {
     mockedUseGroup.mockReturnValue(state());
     render(<GroupScreen />);

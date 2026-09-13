@@ -9,6 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Radii, Spacing } from '@/constants/theme';
+import { useGoBack } from '@/hooks/use-go-back';
 import { useGroupInvite } from '@/hooks/use-group-invite';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { GROUP_FEATURES } from '@/lib/group-features';
@@ -23,6 +24,7 @@ import { GROUP_FEATURES } from '@/lib/group-features';
 export default function JoinGroupScreen() {
   const { code } = useLocalSearchParams<{ code: string }>();
   const router = useRouter();
+  const dismiss = useGoBack('/');
   const { preview, isLoading, isInvalid, isJoining, error, join } = useGroupInvite(code);
 
   const surface = useThemeColor({}, 'surface');
@@ -52,7 +54,7 @@ export default function JoinGroupScreen() {
     return (
       <ThemedView style={styles.root}>
         <SafeAreaView edges={['top']} style={styles.flex}>
-          <CloseButton onPress={() => router.replace('/')} color={muted} />
+          <CloseButton onPress={dismiss} color={muted} />
           <ScreenPlaceholder
             icon="exclamationmark.triangle.fill"
             title="Invite not valid"
@@ -68,7 +70,7 @@ export default function JoinGroupScreen() {
   return (
     <ThemedView style={styles.root}>
       <SafeAreaView edges={['top', 'bottom']} style={styles.flex}>
-        <CloseButton onPress={() => router.replace('/')} color={muted} />
+        <CloseButton onPress={dismiss} color={muted} />
 
         <ScrollView contentContainerStyle={styles.scroll}>
           <ThemedText type="caption" style={styles.kicker}>

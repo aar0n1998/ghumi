@@ -7,10 +7,16 @@ import { useGroupInvite, type GroupInviteState, type GroupPreview } from '@/hook
 // Must be `mock`-prefixed: jest.mock factories are hoisted above this file's
 // own bindings and only allow out-of-scope variables named that way.
 const mockReplace = jest.fn();
+const mockDismiss = jest.fn();
 
 jest.mock('expo-router', () => ({
   useLocalSearchParams: () => ({ code: 'ABCD2345' }),
-  useRouter: () => ({ push: jest.fn(), replace: mockReplace, back: jest.fn() }),
+  useRouter: () => ({
+    push: jest.fn(),
+    replace: mockReplace,
+    back: mockDismiss,
+    canGoBack: () => true,
+  }),
 }));
 
 jest.mock('@/hooks/use-group-invite', () => ({ useGroupInvite: jest.fn() }));
@@ -40,7 +46,10 @@ function state(overrides: Partial<GroupInviteState> = {}): GroupInviteState {
   };
 }
 
-beforeEach(() => mockReplace.mockClear());
+beforeEach(() => {
+  mockReplace.mockClear();
+  mockDismiss.mockClear();
+});
 
 describe('JoinGroupScreen', () => {
   it('shows what the group is about before joining', () => {
@@ -82,6 +91,16 @@ describe('JoinGroupScreen', () => {
 
     expect(screen.getByRole('button', { name: 'Open group' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Join group' })).toBeNull();
+  });
+
+  it('dismisses rather than pushing the list when closed', () => {
+    mockedUseGroupInvite.mockReturnValue(state());
+    render(<JoinGroupScreen />);
+
+    fireEvent.press(screen.getByRole('button', { name: 'Close' }));
+
+    expect(mockDismiss).toHaveBeenCalledTimes(1);
+    expect(mockReplace).not.toHaveBeenCalled();
   });
 
   it('explains a revoked or unknown invite', () => {

@@ -1,4 +1,4 @@
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
@@ -19,13 +19,14 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Radii, Spacing } from '@/constants/theme';
+import { useGoBack } from '@/hooks/use-go-back';
 import { useGroup } from '@/hooks/use-group';
 import { useThemeColor } from '@/hooks/use-theme-color';
 import { GROUP_FEATURES, type GroupFeature } from '@/lib/group-features';
 
 export default function GroupScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
+  const goBack = useGoBack('/');
   const { group, isLoading, isRefreshing, notFound, error, refresh, resetInviteLink, leaveGroup } =
     useGroup(id);
 
@@ -48,7 +49,7 @@ export default function GroupScreen() {
         onPress: async () => {
           try {
             await leaveGroup();
-            router.replace('/');
+            goBack();
           } catch (cause) {
             Alert.alert(
               'Could not leave the group',
@@ -72,7 +73,7 @@ export default function GroupScreen() {
     return (
       <ThemedView style={styles.root}>
         <SafeAreaView edges={['top']} style={styles.flex}>
-          <BackButton onPress={() => router.replace('/')} color={muted} />
+          <BackButton onPress={goBack} color={muted} />
           <ScreenPlaceholder
             icon="exclamationmark.triangle.fill"
             title="Group unavailable"
@@ -97,7 +98,7 @@ export default function GroupScreen() {
         <View style={styles.hero}>
           <GroupCover uri={group.coverUrl} title={group.title} size="large" />
           <SafeAreaView edges={['top']} style={styles.heroOverlay}>
-            <BackButton onPress={() => router.replace('/')} color={muted} onSurface={surface} />
+            <BackButton onPress={goBack} color={muted} onSurface={surface} />
           </SafeAreaView>
         </View>
 
