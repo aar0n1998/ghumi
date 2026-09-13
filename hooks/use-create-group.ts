@@ -51,7 +51,17 @@ async function uploadCover(
     .from(GROUP_COVERS_BUCKET)
     .upload(path, decode(cover.base64), { contentType: cover.mimeType, upsert: false });
 
-  if (error) throw error;
+  if (error) {
+    // "Bucket not found" means the storage migration has not been applied. Say
+    // so, rather than making the user decode a Supabase internal string.
+    if (/bucket not found/i.test(error.message)) {
+      throw new Error(
+        `Cover images are not set up yet — the "${GROUP_COVERS_BUCKET}" storage bucket is missing. ` +
+          'Create a group without a cover, or apply supabase/migrations/0002_group_covers_storage.sql.'
+      );
+    }
+    throw error;
+  }
 
   const { data } = supabase.storage.from(GROUP_COVERS_BUCKET).getPublicUrl(path);
   return data.publicUrl;
@@ -80,30 +90,36 @@ export function useCreateGroup(): CreateGroupState {
       setError(null);
 
       try {
+        // Uploaded first so a storage failure surfaces before a group exists.
         const coverUrl = input.cover ? await uploadCover(userId, input.cover) : null;
 
-        const { data, error: insertError } = await supabase
-          .from('groups')
-          .insert({
-            title: input.title.trim(),
-            description: input.description.trim() || null,
-            cover_url: coverUrl,
-            created_by: userId,
-          })
-          .select('id, title, description, cover_url, created_at')
-          .single();
+        // Goes through an RPC rather than `.insert().select()` on purpose.
+        // That compiles to `INSERT ... RETURNING`, and Postgres will only hand
+        // back a row that already satisfies the table's SELECT policy — which
+        // here is `is_group_member(id)`, satisfied only once the AFTER INSERT
+        // trigger has enrolled the creator. The row was invisible to its own
+        // creator and every create failed with "new row violates row-level
+        // security policy". See supabase/migrations/0003_create_group_rpc.sql.
+        const { data, error: rpcError } = await supabase.rpc('create_group', {
+          p_title: input.title.trim(),
+          p_description: input.description.trim() || null,
+          p_cover_url: coverUrl,
+        });
 
-        if (insertError) throw insertError;
+        if (rpcError) throw rpcError;
+
+        const created = data?.[0];
+        if (!created) throw new Error('The group was not created. Please try again.');
 
         return {
-          id: data.id,
-          title: data.title,
-          description: data.description,
-          coverUrl: data.cover_url,
-          // The insert trigger enrols the creator as owner, so it is never empty.
+          id: created.id,
+          title: created.title,
+          description: created.description,
+          coverUrl: created.cover_url,
+          // create_group() enrols the caller as owner, so it is never empty.
           memberCount: 1,
           role: 'owner',
-          createdAt: data.created_at,
+          createdAt: created.created_at,
         };
       } catch (cause) {
         const message = messageFrom(cause, 'Could not create the group.');

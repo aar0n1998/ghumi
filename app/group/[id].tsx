@@ -201,7 +201,13 @@ const styles = StyleSheet.create({
     aspectRatio: 16 / 10,
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    // RN 0.86 dropped `StyleSheet.absoluteFillObject`; `absoluteFill` is a
+    // registered style id and cannot be spread, so write the edges out.
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   back: {
     width: 36,

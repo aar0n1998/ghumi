@@ -2,8 +2,8 @@
 
 ## Stack
 
-- **Expo** (SDK 54) with **Expo Router** v6 — file-based routing
-- **React Native** 0.81 · **React** 19 · **TypeScript** (strict)
+- **Expo** (SDK 57) with **Expo Router** v57 — file-based routing
+- **React Native** 0.86 · **React** 19.2 · **TypeScript** 6 (strict)
 - **react-native-reanimated** for animations
 - **Jest** + **@testing-library/react-native** for tests
 - **Supabase** for auth and (next) data
@@ -74,6 +74,20 @@ one debugging session.
 
 Symptom to recognise: modules evaluate (top-level `console.log` fires) but component renders never
 happen. That gap means route resolution, not a rendering bug.
+
+### react-navigation types under SDK 57
+
+expo-router now **vendors its own copy** of react-navigation. The vendored types are structurally
+identical to the originals but nominally distinct, so mixing the two fails to typecheck — a
+component typed with `@react-navigation/bottom-tabs`' `BottomTabBarButtonProps` is rejected by
+`tabBarButton`. Import both the types and the components from expo-router instead:
+
+```ts
+import { PlatformPressable } from 'expo-router/react-navigation';
+import type { BottomTabBarButtonProps } from 'expo-router/tabs';
+```
+
+See `components/haptic-tab.tsx`.
 
 ### Auth routing
 
@@ -215,6 +229,15 @@ cascade on user deletion).
   code would expose every column of every group to anyone who could guess a code.
 - **Cover uploads are keyed by uploader id, not group id** (`<uid>/<random>.jpg`), because the group
   row does not exist yet when the create screen uploads the image.
+- **Never create a row with `.insert().select()` when the table's SELECT policy depends on a
+  row written by a trigger.** That compiles to `INSERT ... RETURNING`, and Postgres will only
+  return a row that already satisfies the SELECT policy. `groups` is readable via
+  `is_group_member(id)`, and membership is added by an AFTER INSERT trigger that has not fired
+  yet — so every create failed with *"new row violates row-level security policy"*. Groups are
+  created through the security-definer `create_group()` RPC instead (migration 0003); direct
+  INSERT on `groups` is revoked. A plain INSERT without RETURNING always worked, which is exactly
+  why the first RLS test suite passed while the app was broken — **test the statement the client
+  actually sends.**
 - **Upload base64, not a blob.** `fetch(fileUri).then(r => r.blob())` silently uploads a zero-byte
   object under Hermes. `use-create-group.ts` decodes base64 to an ArrayBuffer instead.
 
@@ -230,8 +253,19 @@ npm run lint       # expo lint
 ```
 
 **Node version:** this machine resolves `node` to v14 from `/usr/local/bin/node` in
-non-interactive shells, which Expo SDK 54 will not run on. Ensure Node 20+ is first on `PATH`
-before running anything (nvm's default is 20.17).
+non-interactive shells, which Expo will not run on. React Native 0.86 requires
+**Node ^20.19.4 || ^22.13.0 || ^24.3.0 || >=25** — nvm's default of 20.17 is *not* enough.
+Put a supported version first on `PATH` before running anything:
+
+```bash
+export PATH="$HOME/.nvm/versions/node/v20.19.5/bin:$PATH"
+```
+
+**`react-test-renderer` must be pinned to exactly the same version as `react`.** A caret range
+floats it ahead of whatever React the SDK pins and a clean `npm install` then fails to resolve.
+
+**Expo Go only ever bundles the latest SDK.** If the app will not open on a phone and Expo Go
+reports an SDK mismatch, the project is behind — upgrade, or use a dev build.
 
 **Simulator:** the Claude Code iOS Simulator integration requires
 `sudo xcode-select -s /Applications/Xcode.app/Contents/Developer`. Until that is run, an agent can

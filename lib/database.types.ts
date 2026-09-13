@@ -112,6 +112,17 @@ export type Database = {
     };
     Views: Record<never, never>;
     Functions: {
+      create_group: {
+        Args: { p_title: string; p_description?: string | null; p_cover_url?: string | null };
+        Returns: {
+          id: string;
+          title: string;
+          description: string | null;
+          cover_url: string | null;
+          invite_code: string;
+          created_at: string;
+        }[];
+      };
       get_group_preview: {
         Args: { p_invite_code: string };
         Returns: {

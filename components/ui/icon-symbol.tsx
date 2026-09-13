@@ -5,7 +5,13 @@ import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
-type IconMapping = Record<SymbolViewProps['name'], ComponentProps<typeof MaterialIcons>['name']>;
+/**
+ * SDK 57's `SymbolViewProps['name']` widened to `SFSymbolName | { ios, android,
+ * web }`. Only the plain string form can key this mapping.
+ */
+type SFSymbolName = Extract<SymbolViewProps['name'], string>;
+
+type IconMapping = Record<SFSymbolName, ComponentProps<typeof MaterialIcons>['name']>;
 
 /**
  * SF Symbol → Material Icon mappings. Add an entry here before using an icon

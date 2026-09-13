@@ -1,4 +1,6 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+// Since SDK 56 expo-router vendors react-navigation and refuses to bundle when
+// the standalone @react-navigation/* packages are installed. Import from here.
+import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router/react-navigation';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
