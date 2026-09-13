@@ -10,6 +10,7 @@ import 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/hooks/use-auth';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { usePendingInvite } from '@/hooks/use-pending-invite';
 
 // Anchor the route tree at the tabs group so "/" resolves to Groups.
 export const unstable_settings = {
@@ -54,6 +55,9 @@ const GhumiDarkTheme = {
 function RootNavigator() {
   const { session, isLoading } = useAuth();
 
+  // Replays an invite link that arrived while the user was signed out.
+  usePendingInvite();
+
   useEffect(() => {
     if (!isLoading) {
       SplashScreen.hideAsync();
@@ -67,6 +71,8 @@ function RootNavigator() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Protected guard={session !== null}>
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="group" />
+        <Stack.Screen name="join" />
       </Stack.Protected>
       <Stack.Protected guard={session === null}>
         <Stack.Screen name="(auth)" />

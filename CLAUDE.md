@@ -19,12 +19,14 @@ What exists, so you know what you are building on top of:
 | Google sign-in, session persistence, sign-out | **Working** — full Google round-trip verified end to end on the iOS simulator |
 | Splash → auth-guarded routing | **Working** — verified on the iOS simulator |
 | Horizon theme, brand mark, app icons | **Working** |
-| Groups tab | **Placeholder only** — renders an empty state, no data |
+| Groups tab | **Built** — list, create (title/description/cover), group detail, invite links, join flow |
 | Explore tab | **Placeholder only** |
 | Profile tab | Shows Google name/avatar/email + sign out. No editing. |
-| Database | **No tables exist yet.** Supabase project has auth only. |
+| Database | **Schema written, not yet applied.** `supabase/migrations/` holds it; the live project still has auth only until someone runs it. |
+| Group sub-features (chat, itinerary, places, expenses, documents, packing) | **Placeholder tiles only** — each opens an alert saying it is not built |
 
-**Next piece of work is Groups.** Nothing about it has been built or schema'd yet.
+**Next piece of work is the first group sub-feature.** The six tiles are declared in
+`lib/group-features.ts`; pick one and give it a real route.
 
 ---
 
@@ -166,9 +168,55 @@ Rules:
 - The anon/publishable key is safe in the bundle **because** RLS gates it. That is the whole
   security model — treat a missing policy as a data leak, not a TODO.
 
-Open questions for Groups, not yet decided — ask rather than assume: group membership model
-(invite codes vs. direct invites vs. links), whether groups own trips or are the same object,
-and whether realtime sync is needed for v1.
+### Groups — decisions already made
+
+These were settled on 2026-09-13. Do not relitigate them without a reason.
+
+| Question | Decision |
+|---|---|
+| Group vs. trip | **A group *is* a trip.** No separate `trips` table. A second trip means a second group. |
+| Membership | **Instant join by invite code.** Holding the link is the authorisation; no approval step. |
+| Link revocation | Owner can rotate the code (`regenerate_invite_code`), which kills the old link. No expiry. |
+| Link format | `ghumi://join/CODE` custom scheme. Only opens for someone who already has the app. |
+| Cover images | Uploaded from the device to the public `group-covers` bucket. |
+| Realtime | **Not in v1.** Lists refetch on screen focus and on pull-to-refresh. |
+
+Still open: whether an https universal link is worth the hosting (see `lib/invite-link.ts`), and
+whether owners should be able to remove members (the RLS policy already allows it; there is no UI).
+
+### Applying the schema
+
+There are two migrations in `supabase/migrations/`. They are idempotent — safe to re-run.
+
+```bash
+supabase db push          # if the CLI is installed and the project is linked
+```
+
+Otherwise paste each file into the SQL editor in the Supabase dashboard, in order. **Groups will
+show a load error until this is done** — the tables do not exist in the live project yet.
+
+Both were validated against a throwaway Postgres 16 with stubbed `auth`/`storage` schemas, including
+a 22-check pass over the RLS policies (isolation between users, the join RPC, code rotation,
+cascade on user deletion).
+
+### Things about the Groups schema that will bite you
+
+- **Membership predicates must stay `security definer`.** A policy on `group_members` that queries
+  `group_members` re-enters itself and Postgres raises *"infinite recursion detected in policy"*.
+  `is_group_member()` and `is_group_owner()` read the table with RLS bypassed to break that cycle.
+- **There is no INSERT policy on `group_members`, and no INSERT grant.** Membership is only ever
+  created by the `on_group_created` trigger or by `join_group()`. A client cannot add itself, or
+  anyone else, to a group directly. Do not "fix" this by adding a policy.
+- **`group_members.user_id` references `public.profiles`, not `auth.users`.** PostgREST needs that
+  foreign key to embed a member's name and avatar in the same request. The cascade to `auth.users`
+  still happens, through `profiles.id`.
+- **Non-members have no `select` on `groups` at all.** The pre-join preview goes through
+  `get_group_preview()`, which returns a fixed safe subset. A permissive policy keyed on the invite
+  code would expose every column of every group to anyone who could guess a code.
+- **Cover uploads are keyed by uploader id, not group id** (`<uid>/<random>.jpg`), because the group
+  row does not exist yet when the create screen uploads the image.
+- **Upload base64, not a blob.** `fetch(fileUri).then(r => r.blob())` silently uploads a zero-byte
+  object under Hermes. `use-create-group.ts` decodes base64 to an ArrayBuffer instead.
 
 ---
 

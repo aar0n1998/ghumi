@@ -1,4 +1,4 @@
-import { existsSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const appDir = join(__dirname, '..', '..', 'app');
@@ -17,7 +17,7 @@ describe('route structure', () => {
   });
 
   it('anchors the root layout at the tabs group', () => {
-    const layout = require('fs').readFileSync(join(appDir, '_layout.tsx'), 'utf8');
+    const layout = readFileSync(join(appDir, '_layout.tsx'), 'utf8');
     expect(layout).toMatch(/unstable_settings/);
     expect(layout).toMatch(/anchor:\s*'\(tabs\)'/);
   });
@@ -32,5 +32,23 @@ describe('route structure', () => {
   it('keeps the signed-out group separate from the tabs', () => {
     expect(existsSync(join(appDir, '(auth)', 'sign-in.tsx'))).toBe(true);
     expect(existsSync(join(appDir, '(auth)', '_layout.tsx'))).toBe(true);
+  });
+
+  it('puts group and join routes outside the tabs so they open full-screen', () => {
+    expect(existsSync(join(appDir, 'group', '[id].tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'group', 'create.tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'group', '_layout.tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'join', '[code].tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'join', '_layout.tsx'))).toBe(true);
+  });
+
+  it('guards the group and join routes behind a session', () => {
+    const layout = readFileSync(join(appDir, '_layout.tsx'), 'utf8');
+    const protectedBlock = /guard=\{session !== null\}>([\s\S]*?)<\/Stack.Protected>/.exec(layout);
+
+    expect(protectedBlock).not.toBeNull();
+    // An invite deep link must not be able to reach group data unauthenticated.
+    expect(protectedBlock?.[1]).toMatch(/name="group"/);
+    expect(protectedBlock?.[1]).toMatch(/name="join"/);
   });
 });

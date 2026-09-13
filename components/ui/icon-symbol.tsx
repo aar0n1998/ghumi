@@ -20,6 +20,22 @@ const MAPPING = {
   'rectangle.portrait.and.arrow.right': 'logout',
   'chevron.right': 'chevron-right',
   plus: 'add',
+  'square.and.arrow.up': 'ios-share',
+  'person.badge.plus': 'person-add',
+  link: 'link',
+  'doc.on.doc': 'content-copy',
+  'arrow.clockwise': 'refresh',
+  'photo.on.rectangle.angled': 'add-photo-alternate',
+  xmark: 'close',
+  'checkmark.circle.fill': 'check-circle',
+  'exclamationmark.triangle.fill': 'warning',
+  // Group feature tiles — see lib/group-features.ts.
+  'bubble.left.and.bubble.right.fill': 'forum',
+  calendar: 'event',
+  'mappin.and.ellipse': 'place',
+  'creditcard.fill': 'credit-card',
+  'doc.text.fill': 'description',
+  'suitcase.fill': 'luggage',
 } as IconMapping;
 
 /** The icon names available across every platform. */
