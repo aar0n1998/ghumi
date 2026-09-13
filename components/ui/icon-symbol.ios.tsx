@@ -1,6 +1,13 @@
 import { SymbolView, SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { StyleProp, ViewStyle } from 'react-native';
 
+/**
+ * Mirrors the cross-platform name union in `icon-symbol.tsx`. SF Symbol names
+ * are the source of truth, so this is a superset — but only add icons here that
+ * also have a Material mapping in that file, or Android will render nothing.
+ */
+export type IconSymbolName = SymbolViewProps['name'];
+
 export function IconSymbol({
   name,
   size = 24,
@@ -8,7 +15,7 @@ export function IconSymbol({
   style,
   weight = 'regular',
 }: {
-  name: SymbolViewProps['name'];
+  name: IconSymbolName;
   size?: number;
   color: string;
   style?: StyleProp<ViewStyle>;
