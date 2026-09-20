@@ -8,8 +8,9 @@ const appDir = join(__dirname, '..', '..', 'app');
  *
  * Expo Router navigates to "/" on launch. If no route resolves there, the root
  * layout never mounts — the app hangs on the splash screen with no error logged,
- * which is very hard to diagnose. The Groups screen must therefore stay the
- * index route of the (tabs) group. Renaming it to groups.tsx breaks the app.
+ * which is very hard to diagnose. The My Plan screen must therefore stay the
+ * index route of the (tabs) group. Renaming it breaks the app — and note that
+ * groups.tsx is now a separate tab, so it cannot stand in for the index.
  */
 describe('route structure', () => {
   it('has an index route in the tabs group so "/" resolves', () => {
@@ -22,11 +23,11 @@ describe('route structure', () => {
     expect(layout).toMatch(/anchor:\s*'\(tabs\)'/);
   });
 
-  it('exposes exactly the three expected tabs', () => {
+  it('exposes exactly the four expected tabs', () => {
     const screens = readdirSync(join(appDir, '(tabs)'))
       .filter((f) => f.endsWith('.tsx') && f !== '_layout.tsx')
       .sort();
-    expect(screens).toEqual(['explore.tsx', 'index.tsx', 'profile.tsx']);
+    expect(screens).toEqual(['friends.tsx', 'groups.tsx', 'index.tsx', 'profile.tsx']);
   });
 
   it('keeps the signed-out group separate from the tabs', () => {
@@ -37,9 +38,21 @@ describe('route structure', () => {
   it('puts group and join routes outside the tabs so they open full-screen', () => {
     expect(existsSync(join(appDir, 'group', '[id].tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'group', 'create.tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'group', 'start.tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'group', '_layout.tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'join', '[code].tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'join', '_layout.tsx'))).toBe(true);
+  });
+
+  it('keeps a static /join for typing a code, alongside /join/[code]', () => {
+    // A static segment wins over the dynamic one, so /join is the form and
+    // /join/ABCD2345 is still the preview.
+    expect(existsSync(join(appDir, 'join', 'index.tsx'))).toBe(true);
+  });
+
+  it('gives availability its own route with a layout', () => {
+    expect(existsSync(join(appDir, 'availability', '[id].tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'availability', '_layout.tsx'))).toBe(true);
   });
 
   it('guards the group and join routes behind a session', () => {
@@ -50,5 +63,7 @@ describe('route structure', () => {
     // An invite deep link must not be able to reach group data unauthenticated.
     expect(protectedBlock?.[1]).toMatch(/name="group"/);
     expect(protectedBlock?.[1]).toMatch(/name="join"/);
+    // Availability reads member names — same rule applies.
+    expect(protectedBlock?.[1]).toMatch(/name="availability"/);
   });
 });

@@ -3,6 +3,7 @@ import { useCallback, useRef, useState } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
 import type { GroupSummary } from '@/hooks/use-groups';
+import type { DateRange } from '@/lib/dates';
 import { GROUP_COVERS_BUCKET, supabase } from '@/lib/supabase';
 
 export type NewGroup = {
@@ -10,6 +11,14 @@ export type NewGroup = {
   description: string;
   /** Base64 payload from the image picker, or null for no cover. */
   cover: { base64: string; mimeType: string } | null;
+  /** Trip window, or null while the dates are still undecided. */
+  dates: DateRange | null;
+  location: string;
+  /**
+   * Stored intent only. A public group is still invisible to non-members —
+   * making them discoverable is a separate decision. See migration 0004.
+   */
+  isPublic: boolean;
 };
 
 export type CreateGroupState = {
@@ -104,6 +113,10 @@ export function useCreateGroup(): CreateGroupState {
           p_title: input.title.trim(),
           p_description: input.description.trim() || null,
           p_cover_url: coverUrl,
+          p_starts_on: input.dates?.startsOn ?? null,
+          p_ends_on: input.dates?.endsOn ?? null,
+          p_location: input.location.trim() || null,
+          p_is_public: input.isPublic,
         });
 
         if (rpcError) throw rpcError;

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { useAuth } from '@/hooks/use-auth';
+import type { DateRange } from '@/lib/dates';
 import { supabase } from '@/lib/supabase';
 
 export type GroupMember = {
@@ -20,6 +21,10 @@ export type GroupDetail = {
   coverUrl: string | null;
   inviteCode: string;
   createdAt: string;
+  /** The trip window, once it has one. */
+  dates: DateRange | null;
+  location: string | null;
+  isPublic: boolean;
   members: GroupMember[];
   /** The signed-in user's role, or null if they somehow are not a member. */
   yourRole: 'owner' | 'member' | null;
@@ -71,7 +76,9 @@ export function useGroup(groupId: string | undefined): GroupState {
         const [groupResult, memberResult] = await Promise.all([
           supabase
             .from('groups')
-            .select('id, title, description, cover_url, invite_code, created_at')
+            .select(
+              'id, title, description, cover_url, invite_code, created_at, starts_on, ends_on, location, is_public'
+            )
             .eq('id', groupId)
             .maybeSingle(),
           supabase
@@ -103,6 +110,8 @@ export function useGroup(groupId: string | undefined): GroupState {
 
         if (!isMounted.current) return;
 
+        const { starts_on: startsOn, ends_on: endsOn } = groupResult.data;
+
         setGroup({
           id: groupResult.data.id,
           title: groupResult.data.title,
@@ -110,6 +119,11 @@ export function useGroup(groupId: string | undefined): GroupState {
           coverUrl: groupResult.data.cover_url,
           inviteCode: groupResult.data.invite_code,
           createdAt: groupResult.data.created_at,
+          // Both columns are nullable independently, but a half-set range is
+          // not a range — treat anything but a complete pair as "no dates".
+          dates: startsOn && endsOn ? { startsOn, endsOn } : null,
+          location: groupResult.data.location,
+          isPublic: groupResult.data.is_public,
           members,
           yourRole: members.find((member) => member.isYou)?.role ?? null,
         });

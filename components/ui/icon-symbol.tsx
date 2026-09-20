@@ -23,6 +23,16 @@ const MAPPING = {
   'person.2.fill': 'group',
   'map.fill': 'map',
   'person.crop.circle.fill': 'account-circle',
+  // Tab bar and the landing screen's planning modes.
+  'safari.fill': 'explore',
+  'person.3.fill': 'groups',
+  'person.fill': 'person',
+  'briefcase.fill': 'work',
+  // Trip details on the create screen, and the availability screen.
+  'lock.fill': 'lock',
+  globe: 'public',
+  'calendar.badge.clock': 'event-available',
+  'checkmark.circle': 'check-circle-outline',
   'rectangle.portrait.and.arrow.right': 'logout',
   'chevron.right': 'chevron-right',
   plus: 'add',
