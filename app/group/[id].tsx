@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ActivityIndicator,
   Alert,
@@ -22,10 +22,12 @@ import { Radii, Spacing } from '@/constants/theme';
 import { useGoBack } from '@/hooks/use-go-back';
 import { useGroup } from '@/hooks/use-group';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { formatRange } from '@/lib/dates';
 import { GROUP_FEATURES, type GroupFeature } from '@/lib/group-features';
 
 export default function GroupScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const goBack = useGoBack('/');
   const { group, isLoading, isRefreshing, notFound, error, refresh, resetInviteLink, leaveGroup } =
     useGroup(id);
@@ -110,6 +112,22 @@ export default function GroupScreen() {
               <IconSymbol name="person.2.fill" size={14} color={muted} />
               <ThemedText type="caption">{memberLabel}</ThemedText>
             </View>
+
+            {group.dates ? (
+              <View style={styles.meta}>
+                <IconSymbol name="calendar" size={14} color={muted} />
+                <ThemedText type="caption">
+                  {formatRange(group.dates.startsOn, group.dates.endsOn)}
+                </ThemedText>
+              </View>
+            ) : null}
+
+            {group.location ? (
+              <View style={styles.meta}>
+                <IconSymbol name="mappin.and.ellipse" size={14} color={muted} />
+                <ThemedText type="caption">{group.location}</ThemedText>
+              </View>
+            ) : null}
           </View>
 
           <View style={styles.section}>
@@ -134,6 +152,22 @@ export default function GroupScreen() {
               {group.members.map((member) => (
                 <MemberRow key={member.userId} member={member} />
               ))}
+
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="See who is free"
+                onPress={() => router.push(`/availability/${group.id}`)}
+                style={({ pressed }) => [
+                  styles.availability,
+                  { borderTopColor: border },
+                  pressed && styles.pressed,
+                ]}>
+                <IconSymbol name="calendar.badge.clock" size={18} color={tint} />
+                <ThemedText type="defaultSemiBold" style={[styles.flex, { color: tint }]}>
+                  See who is free
+                </ThemedText>
+                <IconSymbol name="chevron.right" size={16} color={muted} />
+              </Pressable>
             </View>
           </View>
 
@@ -248,6 +282,14 @@ const styles = StyleSheet.create({
     borderRadius: Radii.lg,
     borderWidth: StyleSheet.hairlineWidth * 2,
     marginTop: Spacing.sm,
+  },
+  availability: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingTop: Spacing.md,
+    marginTop: Spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth * 2,
   },
   leave: {
     alignItems: 'center',

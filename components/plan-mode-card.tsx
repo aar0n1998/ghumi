@@ -1,13 +1,29 @@
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
+import { IconSymbol, type IconSymbolName } from '@/components/ui/icon-symbol';
 import { Radii, Spacing } from '@/constants/theme';
 import { useThemeColor } from '@/hooks/use-theme-color';
-import type { PlanMode } from '@/lib/plan-modes';
+
+/**
+ * Anything this card can render. `PlanMode` satisfies it, and so does an
+ * ad-hoc choice like "Create Group" on the group start screen — the card is
+ * about the shape of the row, not about planning modes specifically.
+ */
+export type PlanModeCardItem = {
+  label: string;
+  blurb: string;
+  icon: IconSymbolName;
+  status: 'ready' | 'soon';
+  /**
+   * `secondary` is still a live action — it just does not compete with the
+   * primary one on the same screen. Defaults to `primary`.
+   */
+  emphasis?: 'primary' | 'secondary';
+};
 
 export type PlanModeCardProps = {
-  mode: PlanMode;
+  mode: PlanModeCardItem;
   onPress: () => void;
 };
 
@@ -28,11 +44,12 @@ export function PlanModeCard({ mode, onPress }: PlanModeCardProps) {
   const onTint = useThemeColor({}, 'onTint');
 
   const isReady = mode.status === 'ready';
+  const isFilled = isReady && mode.emphasis !== 'secondary';
 
   // Theme tokens are all 6-digit hex, so appending an alpha pair keeps the
   // translucent fills on-palette in both schemes. Same trick as feature-tile.
-  const wellColor = isReady ? `${onTint}29` : background;
-  const glyphColor = isReady ? onTint : muted;
+  const wellColor = isFilled ? `${onTint}29` : isReady ? `${tint}1A` : background;
+  const glyphColor = isFilled ? onTint : isReady ? tint : muted;
 
   return (
     <Pressable
@@ -43,9 +60,13 @@ export function PlanModeCard({ mode, onPress }: PlanModeCardProps) {
       onPress={onPress}
       style={({ pressed }) => [
         styles.root,
-        isReady
+        isFilled
           ? { backgroundColor: tint }
-          : { backgroundColor: surface, borderColor: border, borderWidth: StyleSheet.hairlineWidth * 2 },
+          : {
+              backgroundColor: surface,
+              borderColor: border,
+              borderWidth: StyleSheet.hairlineWidth * 2,
+            },
         pressed && styles.pressed,
       ]}>
       <View style={[styles.iconWell, { backgroundColor: wellColor }]}>
@@ -53,16 +74,19 @@ export function PlanModeCard({ mode, onPress }: PlanModeCardProps) {
       </View>
 
       <View style={styles.body}>
-        <ThemedText type="defaultSemiBold" style={isReady ? { color: onTint } : undefined}>
+        <ThemedText type="defaultSemiBold" style={isFilled ? { color: onTint } : undefined}>
           {mode.label}
         </ThemedText>
-        <ThemedText type="caption" numberOfLines={2} style={isReady ? { color: onTint } : undefined}>
+        <ThemedText
+          type="caption"
+          numberOfLines={2}
+          style={isFilled ? { color: onTint } : undefined}>
           {mode.blurb}
         </ThemedText>
       </View>
 
       {isReady ? (
-        <IconSymbol name="chevron.right" size={18} color={onTint} />
+        <IconSymbol name="chevron.right" size={18} color={isFilled ? onTint : muted} />
       ) : (
         <View style={[styles.badge, { backgroundColor: `${accent}1A` }]}>
           <ThemedText type="caption" style={[styles.badgeText, { color: accent }]}>

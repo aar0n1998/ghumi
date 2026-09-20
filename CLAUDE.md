@@ -19,14 +19,21 @@ What exists, so you know what you are building on top of:
 | Google sign-in, session persistence, sign-out | **Working** — full Google round-trip verified end to end on the iOS simulator |
 | Splash → auth-guarded routing | **Working** — verified on the iOS simulator |
 | Horizon theme, brand mark, app icons | **Working** |
-| Groups tab | **Built** — list, create (title/description/cover), group detail, invite links, join flow |
-| Explore tab | **Placeholder only** |
+| Plan tab (`app/(tabs)/index.tsx`) | **Built** — the landing screen. Group works; Solo and Agency are declared in `lib/plan-modes.ts` and alert that they are not built |
+| Groups tab | **Built** — list, create (title/description/cover/dates/location/visibility), group detail, invite links, join flow |
+| Joining by typed code (`/join`) | **Built** — feeds the existing `/join/[code]` preview. The `ghumi://` link never opens in Expo Go, so this is how joining is tested |
+| Availability (`/availability/[id]`) | **Built** — each member shares a window; the screen shows who covers the trip dates and the window they all share |
+| Friends tab | **Placeholder only** (replaced the Explore tab) |
 | Profile tab | Shows Google name/avatar/email + sign out. No editing. |
 | Database | **Schema written, not yet applied.** `supabase/migrations/` holds it; the live project still has auth only until someone runs it. |
 | Group sub-features (chat, itinerary, places, expenses, documents, packing) | **Placeholder tiles only** — each opens an alert saying it is not built |
 
 **Next piece of work is the first group sub-feature.** The six tiles are declared in
 `lib/group-features.ts`; pick one and give it a real route.
+
+Availability is the closest thing to a worked example of one: `0004_trip_details.sql` for the
+table and its policies, `hooks/use-group-availability.ts` for the data, `app/availability/[id].tsx`
+for the screen. Copy that shape.
 
 ---
 
@@ -200,7 +207,8 @@ whether owners should be able to remove members (the RLS policy already allows i
 
 ### Applying the schema
 
-There are two migrations in `supabase/migrations/`. They are idempotent — safe to re-run.
+There are four migrations in `supabase/migrations/`. They are idempotent — safe to re-run, and
+must be applied in order.
 
 ```bash
 supabase db push          # if the CLI is installed and the project is linked
@@ -209,9 +217,10 @@ supabase db push          # if the CLI is installed and the project is linked
 Otherwise paste each file into the SQL editor in the Supabase dashboard, in order. **Groups will
 show a load error until this is done** — the tables do not exist in the live project yet.
 
-Both were validated against a throwaway Postgres 16 with stubbed `auth`/`storage` schemas, including
-a 22-check pass over the RLS policies (isolation between users, the join RPC, code rotation,
-cascade on user deletion).
+All four were validated against a throwaway Postgres 16 with stubbed `auth`/`storage` schemas,
+including RLS passes over isolation between users, the join RPC, code rotation, cascade on user
+deletion, and (for 0004) that a member cannot write anyone else's availability and a non-member
+sees none of it.
 
 ### Things about the Groups schema that will bite you
 
@@ -240,6 +249,21 @@ cascade on user deletion).
   actually sends.**
 - **Upload base64, not a blob.** `fetch(fileUri).then(r => r.blob())` silently uploads a zero-byte
   object under Hermes. `use-create-group.ts` decodes base64 to an ArrayBuffer instead.
+- **`groups.is_public` records intent and nothing else.** No policy reads it, so a public group is
+  still invisible to non-members. Making public groups discoverable means letting strangers read
+  `groups` rows and needs a screen to show them in — decide that deliberately rather than wiring
+  the toggle to a policy.
+- **`create or replace function` cannot change a return type.** Adding columns to what
+  `get_group_preview()` returns needs a `drop function` first; 0004 does that. Adding parameters
+  needs the same treatment for a different reason: two overloads whose extra arguments all have
+  defaults are ambiguous to call. Old clients are unaffected either way, because PostgREST sends
+  named arguments.
+- **`group_availability` lets a client insert its own row, unlike `group_members`.** That is not an
+  inconsistency to "fix": membership is an authorisation decision, availability is a statement
+  about yourself inside a group you are already in.
+- **Dates are `YYYY-MM-DD` strings end to end, never `Date` objects.** `new Date('2027-03-04')`
+  parses as UTC midnight, which is the 3rd in any negative offset. `lib/dates.ts` builds dates from
+  their parts and compares ISO days as strings.
 
 ---
 

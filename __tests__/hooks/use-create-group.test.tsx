@@ -44,10 +44,14 @@ describe('useCreateGroup', () => {
     const { result } = renderHook(() => useCreateGroup());
 
     await act(async () => {
-      await result.current.createGroup({ title: 'Goa, March', description: 'Four days', cover: null });
+      await result.current.createGroup({ title: 'Goa, March', description: 'Four days', cover: null, dates: null, location: '', isPublic: false });
     });
 
     expect(rpc).toHaveBeenCalledWith('create_group', {
+      p_starts_on: null,
+      p_ends_on: null,
+      p_location: null,
+      p_is_public: false,
       p_title: 'Goa, March',
       p_description: 'Four days',
       p_cover_url: null,
@@ -65,6 +69,9 @@ describe('useCreateGroup', () => {
         title: 'Goa, March',
         description: 'Four days',
         cover: null,
+        dates: null,
+        location: '',
+        isPublic: false,
       });
     });
 
@@ -85,10 +92,14 @@ describe('useCreateGroup', () => {
     const { result } = renderHook(() => useCreateGroup());
 
     await act(async () => {
-      await result.current.createGroup({ title: '  Goa  ', description: '   ', cover: null });
+      await result.current.createGroup({ title: '  Goa  ', description: '   ', cover: null, dates: null, location: '', isPublic: false });
     });
 
     expect(rpc).toHaveBeenCalledWith('create_group', {
+      p_starts_on: null,
+      p_ends_on: null,
+      p_location: null,
+      p_is_public: false,
       p_title: 'Goa',
       p_description: null,
       p_cover_url: null,
@@ -102,7 +113,7 @@ describe('useCreateGroup', () => {
 
     await act(async () => {
       await expect(
-        result.current.createGroup({ title: 'x', description: '', cover: null })
+        result.current.createGroup({ title: 'x', description: '', cover: null, dates: null, location: '', isPublic: false })
       ).rejects.toThrow('A group needs a title.');
     });
 
@@ -123,6 +134,9 @@ describe('useCreateGroup', () => {
           title: 'Goa',
           description: '',
           cover: { base64: 'AAAA', mimeType: 'image/jpeg' },
+          dates: null,
+          location: '',
+          isPublic: false,
         })
       ).rejects.toThrow(/storage bucket is missing/i);
     });
@@ -145,6 +159,9 @@ describe('useCreateGroup', () => {
         title: 'Goa',
         description: '',
         cover: { base64: 'AAAA', mimeType: 'image/jpeg' },
+        dates: null,
+        location: '',
+        isPublic: false,
       });
     });
 

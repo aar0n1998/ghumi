@@ -39,13 +39,13 @@ describe('PlanScreen', () => {
     expect(screen.getAllByText('Soon')).toHaveLength(2);
   });
 
-  it('sends the one working mode to the groups tab', async () => {
+  it('sends the one working mode into the group flow', async () => {
     const user = userEvent.setup();
     render(<PlanScreen />);
 
     await user.press(screen.getByRole('button', { name: /^Group\./ }));
 
-    expect(mockPush).toHaveBeenCalledWith('/groups');
+    expect(mockPush).toHaveBeenCalledWith('/group/start');
   });
 
   it('says so rather than navigating for a mode that does not exist yet', async () => {

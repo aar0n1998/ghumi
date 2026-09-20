@@ -13,17 +13,21 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DateRangeSheet } from '@/components/date-range-sheet';
 import { PrimaryButton } from '@/components/primary-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { VisibilityToggle, type GroupVisibility } from '@/components/visibility-toggle';
 import { Radii, Spacing } from '@/constants/theme';
 import { useCoverPicker } from '@/hooks/use-cover-picker';
 import { useCreateGroup } from '@/hooks/use-create-group';
 import { useThemeColor } from '@/hooks/use-theme-color';
+import { formatRange, type DateRange } from '@/lib/dates';
 
 const TITLE_LIMIT = 80;
 const DESCRIPTION_LIMIT = 500;
+const LOCATION_LIMIT = 120;
 
 export default function CreateGroupScreen() {
   const router = useRouter();
@@ -32,6 +36,10 @@ export default function CreateGroupScreen() {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [dates, setDates] = useState<DateRange | null>(null);
+  const [location, setLocation] = useState('');
+  const [visibility, setVisibility] = useState<GroupVisibility>('private');
+  const [isPickingDates, setIsPickingDates] = useState(false);
 
   const surface = useThemeColor({}, 'surface');
   const border = useThemeColor({}, 'border');
@@ -48,6 +56,9 @@ export default function CreateGroupScreen() {
         title,
         description,
         cover: cover ? { base64: cover.base64, mimeType: cover.mimeType } : null,
+        dates,
+        location,
+        isPublic: visibility === 'public',
       });
 
       // Replace rather than push: dismissing the new group should land on the
@@ -165,6 +176,66 @@ export default function CreateGroupScreen() {
               </ThemedText>
             </View>
 
+            <View style={styles.field}>
+              <ThemedText type="defaultSemiBold">Members</ThemedText>
+              <View style={[styles.readOnlyRow, { backgroundColor: surface, borderColor: border }]}>
+                <IconSymbol name="person.2.fill" size={18} color={muted} />
+                <ThemedText type="caption" style={styles.flex}>
+                  Just you for now. Everyone else joins with the invite link once the group exists.
+                </ThemedText>
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <View style={styles.fieldHeader}>
+                <ThemedText type="defaultSemiBold">Dates</ThemedText>
+                <ThemedText type="caption">Optional</ThemedText>
+              </View>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel={
+                  dates ? `Trip dates, ${formatRange(dates.startsOn, dates.endsOn)}` : 'Add trip dates'
+                }
+                onPress={() => setIsPickingDates(true)}
+                style={({ pressed }) => [
+                  styles.pickerRow,
+                  { backgroundColor: surface, borderColor: dates ? tint : border },
+                  pressed && styles.pressed,
+                ]}>
+                <IconSymbol name="calendar" size={20} color={dates ? tint : muted} />
+                <ThemedText style={[styles.flex, !dates && { color: muted }]}>
+                  {dates ? formatRange(dates.startsOn, dates.endsOn) : 'When are you going?'}
+                </ThemedText>
+                <IconSymbol name="chevron.right" size={16} color={muted} />
+              </Pressable>
+            </View>
+
+            <View style={styles.field}>
+              <View style={styles.fieldHeader}>
+                <ThemedText type="defaultSemiBold">Location</ThemedText>
+                <ThemedText type="caption">Optional</ThemedText>
+              </View>
+              <TextInput
+                value={location}
+                onChangeText={setLocation}
+                placeholder="Where are you headed?"
+                placeholderTextColor={muted}
+                maxLength={LOCATION_LIMIT}
+                accessibilityLabel="Trip location"
+                style={[styles.input, { backgroundColor: surface, borderColor: border, color: text }]}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <ThemedText type="defaultSemiBold">Visibility</ThemedText>
+              <VisibilityToggle value={visibility} onChange={setVisibility} />
+              <ThemedText type="caption">
+                {visibility === 'private'
+                  ? 'Only people with the invite link can find this group.'
+                  : 'Marked public. Discovery is not built yet, so it behaves the same for now.'}
+              </ThemedText>
+            </View>
+
             {error ? (
               <View style={styles.errorRow}>
                 <IconSymbol name="exclamationmark.triangle.fill" size={15} color={danger} />
@@ -189,6 +260,17 @@ export default function CreateGroupScreen() {
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>
+
+      <DateRangeSheet
+        visible={isPickingDates}
+        value={dates}
+        title="When is the trip?"
+        onDismiss={() => setIsPickingDates(false)}
+        onConfirm={(range) => {
+          setDates(range);
+          setIsPickingDates(false);
+        }}
+      />
     </ThemedView>
   );
 }
@@ -262,6 +344,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-start',
     gap: Spacing.xs,
+  },
+  readOnlyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    minHeight: 52,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderRadius: Radii.md,
+    borderWidth: StyleSheet.hairlineWidth * 2,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    minHeight: 52,
+    paddingHorizontal: Spacing.lg,
+    borderRadius: Radii.md,
+    borderWidth: StyleSheet.hairlineWidth * 2,
   },
   footer: {
     paddingHorizontal: Spacing.xl,

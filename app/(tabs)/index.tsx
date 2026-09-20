@@ -21,7 +21,7 @@ export default function PlanScreen() {
 
   const openMode = (mode: PlanMode) => {
     if (mode.status === 'ready') {
-      router.push('/groups');
+      router.push('/group/start');
       return;
     }
 

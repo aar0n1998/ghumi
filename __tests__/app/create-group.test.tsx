@@ -80,6 +80,9 @@ describe('CreateGroupScreen', () => {
 
     await waitFor(() =>
       expect(createGroup).toHaveBeenCalledWith({
+        dates: null,
+        location: '',
+        isPublic: false,
         title: 'Goa, March',
         description: 'Four days',
         cover: null,

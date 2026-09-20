@@ -75,6 +75,7 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="group" />
         <Stack.Screen name="join" />
+        <Stack.Screen name="availability" />
       </Stack.Protected>
       <Stack.Protected guard={session === null}>
         <Stack.Screen name="(auth)" />

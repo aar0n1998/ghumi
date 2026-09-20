@@ -30,6 +30,9 @@ const detail: GroupDetail = {
   coverUrl: null,
   inviteCode: 'ABCD2345',
   createdAt: '2026-01-01T00:00:00Z',
+  dates: { startsOn: '2027-03-04', endsOn: '2027-03-07' },
+  location: 'Goa',
+  isPublic: false,
   yourRole: 'owner',
   members: [
     {

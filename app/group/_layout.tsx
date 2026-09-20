@@ -8,6 +8,7 @@ export default function GroupLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="[id]" />
+      <Stack.Screen name="start" />
       <Stack.Screen name="create" options={{ presentation: 'modal' }} />
     </Stack>
   );

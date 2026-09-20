@@ -38,9 +38,21 @@ describe('route structure', () => {
   it('puts group and join routes outside the tabs so they open full-screen', () => {
     expect(existsSync(join(appDir, 'group', '[id].tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'group', 'create.tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'group', 'start.tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'group', '_layout.tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'join', '[code].tsx'))).toBe(true);
     expect(existsSync(join(appDir, 'join', '_layout.tsx'))).toBe(true);
+  });
+
+  it('keeps a static /join for typing a code, alongside /join/[code]', () => {
+    // A static segment wins over the dynamic one, so /join is the form and
+    // /join/ABCD2345 is still the preview.
+    expect(existsSync(join(appDir, 'join', 'index.tsx'))).toBe(true);
+  });
+
+  it('gives availability its own route with a layout', () => {
+    expect(existsSync(join(appDir, 'availability', '[id].tsx'))).toBe(true);
+    expect(existsSync(join(appDir, 'availability', '_layout.tsx'))).toBe(true);
   });
 
   it('guards the group and join routes behind a session', () => {
@@ -51,5 +63,7 @@ describe('route structure', () => {
     // An invite deep link must not be able to reach group data unauthenticated.
     expect(protectedBlock?.[1]).toMatch(/name="group"/);
     expect(protectedBlock?.[1]).toMatch(/name="join"/);
+    // Availability reads member names — same rule applies.
+    expect(protectedBlock?.[1]).toMatch(/name="availability"/);
   });
 });

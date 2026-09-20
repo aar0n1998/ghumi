@@ -28,6 +28,11 @@ const MAPPING = {
   'person.3.fill': 'groups',
   'person.fill': 'person',
   'briefcase.fill': 'work',
+  // Trip details on the create screen, and the availability screen.
+  'lock.fill': 'lock',
+  globe: 'public',
+  'calendar.badge.clock': 'event-available',
+  'checkmark.circle': 'check-circle-outline',
   'rectangle.portrait.and.arrow.right': 'logout',
   'chevron.right': 'chevron-right',
   plus: 'add',
