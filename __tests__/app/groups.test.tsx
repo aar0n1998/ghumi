@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react-native';
 import React from 'react';
 
-import GroupsScreen from '@/app/(tabs)/index';
+import GroupsScreen from '@/app/(tabs)/groups';
 import { useGroups, type GroupsState } from '@/hooks/use-groups';
 
 jest.mock('expo-router', () => ({

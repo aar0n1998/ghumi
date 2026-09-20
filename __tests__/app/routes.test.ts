@@ -8,8 +8,9 @@ const appDir = join(__dirname, '..', '..', 'app');
  *
  * Expo Router navigates to "/" on launch. If no route resolves there, the root
  * layout never mounts — the app hangs on the splash screen with no error logged,
- * which is very hard to diagnose. The Groups screen must therefore stay the
- * index route of the (tabs) group. Renaming it to groups.tsx breaks the app.
+ * which is very hard to diagnose. The My Plan screen must therefore stay the
+ * index route of the (tabs) group. Renaming it breaks the app — and note that
+ * groups.tsx is now a separate tab, so it cannot stand in for the index.
  */
 describe('route structure', () => {
   it('has an index route in the tabs group so "/" resolves', () => {
@@ -22,11 +23,11 @@ describe('route structure', () => {
     expect(layout).toMatch(/anchor:\s*'\(tabs\)'/);
   });
 
-  it('exposes exactly the three expected tabs', () => {
+  it('exposes exactly the four expected tabs', () => {
     const screens = readdirSync(join(appDir, '(tabs)'))
       .filter((f) => f.endsWith('.tsx') && f !== '_layout.tsx')
       .sort();
-    expect(screens).toEqual(['explore.tsx', 'index.tsx', 'profile.tsx']);
+    expect(screens).toEqual(['friends.tsx', 'groups.tsx', 'index.tsx', 'profile.tsx']);
   });
 
   it('keeps the signed-out group separate from the tabs', () => {

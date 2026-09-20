@@ -21,18 +21,26 @@ export default function TabLayout() {
         headerShown: false,
         tabBarButton: HapticTab,
       }}>
+      {/* `index` is the landing route. Do not rename it — see app/(tabs)/index.tsx. */}
       <Tabs.Screen
         name="index"
+        options={{
+          title: 'Plan',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="safari.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="groups"
         options={{
           title: 'Groups',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.2.fill" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="friends"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
+          title: 'Friends',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.3.fill" color={color} />,
         }}
       />
       <Tabs.Screen

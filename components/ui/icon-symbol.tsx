@@ -23,6 +23,11 @@ const MAPPING = {
   'person.2.fill': 'group',
   'map.fill': 'map',
   'person.crop.circle.fill': 'account-circle',
+  // Tab bar and the landing screen's planning modes.
+  'safari.fill': 'explore',
+  'person.3.fill': 'groups',
+  'person.fill': 'person',
+  'briefcase.fill': 'work',
   'rectangle.portrait.and.arrow.right': 'logout',
   'chevron.right': 'chevron-right',
   plus: 'add',
